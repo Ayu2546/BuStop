@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hackathon_app/Next_Page.dart';
+import 'package:hackathon_app/NextPage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,8 +24,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-
-
   final String title;
 
   @override
@@ -33,12 +31,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
   void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+    setState(() {});
   }
 
   @override
@@ -47,7 +41,6 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
-
       ),
       body: Center(
         child: ElevatedButton(
@@ -55,8 +48,8 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: () {
             // ボタンを押された時の動作
             Navigator.push(
-             context,
-             MaterialPageRoute(builder: (context) => NextPage()),
+              context,
+              MaterialPageRoute(builder: (context) => NextPage()),
             );
           },
         ),
