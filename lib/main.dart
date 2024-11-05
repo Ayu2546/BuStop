@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
+import 'dart:async';
 
 void main() {
   runApp(MyApp());
@@ -27,7 +28,9 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController mapController;
-  final LatLng _center = const LatLng(35.6895, 139.6917); // Tokyo coordinates
+  final LatLng defaultLocation =
+      const LatLng(35.6895, 139.6917); // Tokyo coordinates
+  final Completer<GoogleMapController> _controller = Completer();
 
   @override
   void initState() {
@@ -35,7 +38,13 @@ class _MapScreenState extends State<MapScreen> {
     _checkAndRequestLocationPermission();
   }
 
-  // Check and handle location permission and settings
+  // 現在位置を取得
+  Future<LatLng> getCurrentLocation() async {
+    final position = await Geolocator.getCurrentPosition();
+    return LatLng(position.latitude, position.longitude);
+  }
+
+  // 位置情報のパーミッションと設定を確認
   Future<void> _checkAndRequestLocationPermission() async {
     final locationResult = await checkLocationSetting();
     if (locationResult != LocationSettingResult.enabled) {
@@ -43,9 +52,10 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // Called when the map is created
+  // マップ作成時の処理
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    _controller.complete(controller);
   }
 
   @override
@@ -54,18 +64,28 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('Google Map'),
       ),
-      body: GoogleMap(
-        onMapCreated: _onMapCreated,
-        initialCameraPosition: CameraPosition(
-          target: _center,
-          zoom: 11.0,
-        ),
+      body: FutureBuilder<LatLng>(
+        future: getCurrentLocation(),
+        builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return GoogleMap(
+            mapType: MapType.normal,
+            initialCameraPosition: CameraPosition(
+              target: snapshot.data ?? defaultLocation,
+              zoom: 17.0,
+            ),
+            myLocationEnabled: true,
+            onMapCreated: _onMapCreated,
+          );
+        },
       ),
     );
   }
 }
 
-// Enum for location setting results
+// LocationSettingResult の定義
 enum LocationSettingResult {
   serviceDisabled,
   permissionDenied,
@@ -73,7 +93,7 @@ enum LocationSettingResult {
   enabled,
 }
 
-// Check location permission and settings
+// 位置情報パーミッションと設定の確認
 Future<LocationSettingResult> checkLocationSetting() async {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
@@ -98,7 +118,7 @@ Future<LocationSettingResult> checkLocationSetting() async {
   return LocationSettingResult.enabled;
 }
 
-// Handle recovering location settings
+// 位置設定のリカバリ処理
 Future<void> recoverLocationSettings(
     BuildContext context, LocationSettingResult locationResult) async {
   if (locationResult == LocationSettingResult.enabled) {
