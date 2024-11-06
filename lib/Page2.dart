@@ -1,6 +1,7 @@
 import 'package:hackathon_app/Puzzle.dart';
 import 'package:hackathon_app/StarPuzzle.dart';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,13 +35,22 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final List<Image> puzzlePieces = [
     // ここに各パズルピースの画像を追加
-    Image.asset(''),
-    Image.asset('assets/2.png'),
-    Image.asset('assets/3.png'),
-    Image.asset('assets/4.png'),
-    Image.asset('assets/5.png'),
-    Image.asset('assets/6.png'),
+    Image.asset('assets/images/1.png'),
+    Image.asset('assets/images/2.png'),
+    Image.asset('assets/images/3.png'),
+    Image.asset('assets/images/4.png'),
+    Image.asset('assets/images/5.png'),
+    Image.asset('assets/images/6.png'),
   ];
+
+  // AudioPlayerのインスタンスを作成
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  // サウンド再生のメソッド
+  Future<void> _playSound() async {
+    await _audioPlayer.play(AssetSource('assets/sounds/tapping.wav'));
+  }
+
   void _incrementCounter() {
     setState(() {});
   }
@@ -56,10 +66,14 @@ class _MyHomePageState extends State<MyHomePage> {
         child: ElevatedButton(
           child: const Text('Next'),
           onPressed: () {
+            // サウンド再生
+            _playSound();
+
             // ボタンを押された時の動作
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Puzzle(puzzlePieces: puzzlePieces)),
+              MaterialPageRoute(
+                  builder: (context) => Puzzle(puzzlePieces: puzzlePieces)),
             );
           },
         ),
@@ -68,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }

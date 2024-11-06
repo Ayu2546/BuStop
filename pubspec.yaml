@@ -39,7 +39,7 @@ dependencies:
   google_maps_flutter: ^2.9.0
   geolocator: ^13.0.1
   adaptive_dialog: ^2.2.1
-  audioplayers: ^0.19.1
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
