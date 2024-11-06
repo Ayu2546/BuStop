@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
+import 'dart:async';
 
 void main() {
   runApp(MyApp());
@@ -27,25 +28,56 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController mapController;
-  final LatLng _center = const LatLng(35.6895, 139.6917); // Tokyo coordinates
+  final LatLng defaultLocation =
+      const LatLng(35.6895, 139.6917); // Tokyo coordinates
+  final Completer<GoogleMapController> _controller = Completer();
+  LatLng? _currentPosition; // 現在位置を保持
 
   @override
   void initState() {
     super.initState();
-    _checkAndRequestLocationPermission();
+    _initLocationService();
   }
 
-  // Check and handle location permission and settings
-  Future<void> _checkAndRequestLocationPermission() async {
+  // 位置情報パーミッションと位置取得を行う初期化メソッド
+  Future<void> _initLocationService() async {
     final locationResult = await checkLocationSetting();
-    if (locationResult != LocationSettingResult.enabled) {
+    if (locationResult == LocationSettingResult.enabled) {
+      await _getCurrentLocation();
+    } else {
       await recoverLocationSettings(context, locationResult);
     }
   }
 
-  // Called when the map is created
+  // 現在位置を取得
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _currentPosition = LatLng(position.latitude, position.longitude);
+      });
+      _moveToCurrentLocation();
+    } catch (e) {
+      print("Error getting location: $e");
+    }
+  }
+
+  // 現在位置に地図を移動
+  void _moveToCurrentLocation() {
+    if (_currentPosition != null) {
+      mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: _currentPosition!, zoom: 17),
+        ),
+      );
+    }
+  }
+
+  // マップ作成時の処理
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    _controller.complete(controller);
   }
 
   @override
@@ -55,17 +87,19 @@ class _MapScreenState extends State<MapScreen> {
         title: const Text('Google Map'),
       ),
       body: GoogleMap(
-        onMapCreated: _onMapCreated,
+        mapType: MapType.normal,
         initialCameraPosition: CameraPosition(
-          target: _center,
-          zoom: 11.0,
+          target: _currentPosition ?? defaultLocation,
+          zoom: 15.0,
         ),
+        myLocationEnabled: true,
+        onMapCreated: _onMapCreated,
       ),
     );
   }
 }
 
-// Enum for location setting results
+// LocationSettingResult の定義
 enum LocationSettingResult {
   serviceDisabled,
   permissionDenied,
@@ -73,7 +107,7 @@ enum LocationSettingResult {
   enabled,
 }
 
-// Check location permission and settings
+// 位置情報パーミッションと設定の確認
 Future<LocationSettingResult> checkLocationSetting() async {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
@@ -98,7 +132,7 @@ Future<LocationSettingResult> checkLocationSetting() async {
   return LocationSettingResult.enabled;
 }
 
-// Handle recovering location settings
+// 位置設定のリカバリ処理
 Future<void> recoverLocationSettings(
     BuildContext context, LocationSettingResult locationResult) async {
   if (locationResult == LocationSettingResult.enabled) {
