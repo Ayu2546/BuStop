@@ -43,12 +43,10 @@ class _MyHomePageState extends State<MyHomePage> {
     Image.asset('assets/images/6.png'),
   ];
 
-  // AudioPlayerのインスタンスを作成
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   // サウンド再生のメソッド
-  Future<void> _playSound() async {
-    await _audioPlayer.play(AssetSource('assets/sounds/tapping.wav'));
+  void _playSound() {
+    final player = AudioPlayer();
+    player.play(AssetSource('sounds/Tapping.wav'));
   }
 
   void _incrementCounter() {

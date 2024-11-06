@@ -64,7 +64,7 @@ flutter:
     - assets/images/4.png
     - assets/images/5.png
     - assets/images/6.png
-    - assets/sounds/tapping.wav
+    - assets/sounds/Tapping.wav
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
