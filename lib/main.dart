@@ -31,24 +31,46 @@ class _MapScreenState extends State<MapScreen> {
   final LatLng defaultLocation =
       const LatLng(35.6895, 139.6917); // Tokyo coordinates
   final Completer<GoogleMapController> _controller = Completer();
+  LatLng? _currentPosition; // 現在位置を保持
 
   @override
   void initState() {
     super.initState();
-    _checkAndRequestLocationPermission();
+    _initLocationService();
+  }
+
+  // 位置情報パーミッションと位置取得を行う初期化メソッド
+  Future<void> _initLocationService() async {
+    final locationResult = await checkLocationSetting();
+    if (locationResult == LocationSettingResult.enabled) {
+      await _getCurrentLocation();
+    } else {
+      await recoverLocationSettings(context, locationResult);
+    }
   }
 
   // 現在位置を取得
-  Future<LatLng> getCurrentLocation() async {
-    final position = await Geolocator.getCurrentPosition();
-    return LatLng(position.latitude, position.longitude);
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _currentPosition = LatLng(position.latitude, position.longitude);
+      });
+      _moveToCurrentLocation();
+    } catch (e) {
+      print("Error getting location: $e");
+    }
   }
 
-  // 位置情報のパーミッションと設定を確認
-  Future<void> _checkAndRequestLocationPermission() async {
-    final locationResult = await checkLocationSetting();
-    if (locationResult != LocationSettingResult.enabled) {
-      await recoverLocationSettings(context, locationResult);
+  // 現在位置に地図を移動
+  void _moveToCurrentLocation() {
+    if (_currentPosition != null) {
+      mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: _currentPosition!, zoom: 17),
+        ),
+      );
     }
   }
 
@@ -64,22 +86,14 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('Google Map'),
       ),
-      body: FutureBuilder<LatLng>(
-        future: getCurrentLocation(),
-        builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return GoogleMap(
-            mapType: MapType.normal,
-            initialCameraPosition: CameraPosition(
-              target: snapshot.data ?? defaultLocation,
-              zoom: 17.0,
-            ),
-            myLocationEnabled: true,
-            onMapCreated: _onMapCreated,
-          );
-        },
+      body: GoogleMap(
+        mapType: MapType.normal,
+        initialCameraPosition: CameraPosition(
+          target: _currentPosition ?? defaultLocation,
+          zoom: 15.0,
+        ),
+        myLocationEnabled: true,
+        onMapCreated: _onMapCreated,
       ),
     );
   }
