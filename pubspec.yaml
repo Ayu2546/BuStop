@@ -39,6 +39,7 @@ dependencies:
   google_maps_flutter: ^2.9.0
   geolocator: ^13.0.1
   adaptive_dialog: ^2.2.1
+  audioplayers: ^0.19.1
 
 dev_dependencies:
   flutter_test:
@@ -57,12 +58,13 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/1.png
-    - assets/2.png
-    - assets/3.png
-    - assets/4.png
-    - assets/5.png
-    - assets/6.png
+    - assets/images/1.png
+    - assets/images/2.png
+    - assets/images/3.png
+    - assets/images/4.png
+    - assets/images/5.png
+    - assets/images/6.png
+    - assets/sounds/tapping.wav
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
