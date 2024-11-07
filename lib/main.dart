@@ -28,10 +28,10 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController mapController;
-  final LatLng defaultLocation =
-      const LatLng(35.6895, 139.6917); // Tokyo coordinates
+  final LatLng defaultLocation = const LatLng(35.6895, 139.6917); // Tokyo coordinates
   final Completer<GoogleMapController> _controller = Completer();
-  LatLng? _currentPosition; // 現在位置を保持
+  LatLng? _currentPosition;
+  final TextEditingController _searchController = TextEditingController(); // 検索バー用のコントローラー
 
   @override
   void initState() {
@@ -39,7 +39,6 @@ class _MapScreenState extends State<MapScreen> {
     _initLocationService();
   }
 
-  // 位置情報パーミッションと位置取得を行う初期化メソッド
   Future<void> _initLocationService() async {
     final locationResult = await checkLocationSetting();
     if (locationResult == LocationSettingResult.enabled) {
@@ -49,11 +48,14 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // 現在位置を取得
   Future<void> _getCurrentLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+        ),
+      );
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
       });
@@ -63,9 +65,8 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // 現在位置に地図を移動
   void _moveToCurrentLocation() {
-    if (_currentPosition != null) {
+    if (_currentPosition != null && mapController != null) {
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: _currentPosition!, zoom: 17),
@@ -74,26 +75,82 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // マップ作成時の処理
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     _controller.complete(controller);
+  }
+
+  // 検索機能
+  Future<void> _searchAndNavigate() async {
+    String searchQuery = _searchController.text;
+    if (searchQuery.isEmpty) return;
+
+    // 例: ジオロケーションAPIを使って検索するなど、位置を取得するロジックを追加
+    // サンプルとして、ここではTokyoに固定して移動させる
+    LatLng searchedLocation = LatLng(35.6895, 139.6917); // 検索に基づいて取得する座標
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: searchedLocation, zoom: 15),
+      ),
+    );
+  }
+
+  // 拡大・縮小ボタン
+  void _zoomIn() {
+    mapController.animateCamera(CameraUpdate.zoomIn());
+  }
+
+  void _zoomOut() {
+    mapController.animateCamera(CameraUpdate.zoomOut());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Google Map'),
-      ),
-      body: GoogleMap(
-        mapType: MapType.normal,
-        initialCameraPosition: CameraPosition(
-          target: _currentPosition ?? defaultLocation,
-          zoom: 15.0,
+        title: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search location',
+            suffixIcon: IconButton(
+              icon: Icon(Icons.search),
+              onPressed: _searchAndNavigate,
+            ),
+          ),
         ),
-        myLocationEnabled: true,
-        onMapCreated: _onMapCreated,
+      ),
+      body: Stack(
+        children: [
+          GoogleMap(
+            mapType: MapType.normal,
+            initialCameraPosition: CameraPosition(
+              target: _currentPosition ?? defaultLocation,
+              zoom: 15.0,
+            ),
+            myLocationEnabled: true,
+            onMapCreated: _onMapCreated,
+            markers: _markers,
+          ),
+          Positioned(
+            right: 10,
+            bottom: 80,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  onPressed: _zoomIn,
+                  child: Icon(Icons.zoom_in),
+                  mini: true,
+                ),
+                SizedBox(height: 10),
+                FloatingActionButton(
+                  onPressed: _zoomOut,
+                  child: Icon(Icons.zoom_out),
+                  mini: true,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -155,3 +212,21 @@ Future<void> recoverLocationSettings(
         : await Geolocator.openAppSettings();
   }
 }
+
+Set<Marker> _markers = {
+  Marker(
+    markerId: MarkerId('marker1'),
+    position: LatLng(35.6809591, 139.7673068),
+    icon: BitmapDescriptor.defaultMarker,
+  ),
+  Marker(
+    markerId: MarkerId('marker2'),
+    position: LatLng(43.068564, 141.3507138),
+    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+  ),
+  Marker(
+    markerId: MarkerId('marker3'),
+    position: LatLng(34.3976198, 132.4753631),
+    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+  ),
+};
