@@ -35,21 +35,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final List<Image> puzzlePieces = [
     // ここに各パズルピースの画像を追加
-<<<<<<< HEAD
-    Image.asset('assets/1.png'),
-    Image.asset('assets/2.png'),
-    Image.asset('assets/3.png'),
-    Image.asset('assets/4.png'),
-    Image.asset('assets/5.png'),
-    Image.asset('assets/6.png'),
-=======
     Image.asset('assets/images/1.png'),
     Image.asset('assets/images/2.png'),
     Image.asset('assets/images/3.png'),
     Image.asset('assets/images/4.png'),
     Image.asset('assets/images/5.png'),
     Image.asset('assets/images/6.png'),
->>>>>>> develop
   ];
 
   // サウンド再生のメソッド
