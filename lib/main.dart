@@ -3,6 +3,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -28,10 +30,11 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController mapController;
-  final LatLng defaultLocation = const LatLng(35.6895, 139.6917); // Tokyo coordinates
+  final LatLng defaultLocation =
+      const LatLng(35.6895, 139.6917); // Tokyo coordinates
   final Completer<GoogleMapController> _controller = Completer();
   LatLng? _currentPosition;
-  final TextEditingController _searchController = TextEditingController(); // 検索バー用のコントローラー
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -80,19 +83,37 @@ class _MapScreenState extends State<MapScreen> {
     _controller.complete(controller);
   }
 
-  // 検索機能
+  // 検索機能：ジオコードAPIを使用して検索ワードから座標を取得し、マップを移動
   Future<void> _searchAndNavigate() async {
     String searchQuery = _searchController.text;
     if (searchQuery.isEmpty) return;
 
-    // 例: ジオロケーションAPIを使って検索するなど、位置を取得するロジックを追加
-    // サンプルとして、ここではTokyoに固定して移動させる
-    LatLng searchedLocation = LatLng(35.6895, 139.6917); // 検索に基づいて取得する座標
-    mapController.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: searchedLocation, zoom: 15),
-      ),
-    );
+    final apiKey =
+        'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc'; // 自分のAPIキーに置き換えてください
+    final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/geocode/json?address=$searchQuery&key=$apiKey');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['results'].isNotEmpty) {
+          final location = data['results'][0]['geometry']['location'];
+          LatLng searchedLocation = LatLng(location['lat'], location['lng']);
+          mapController.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(target: searchedLocation, zoom: 15),
+            ),
+          );
+        } else {
+          print("No results found for the search.");
+        }
+      } else {
+        print("Failed to fetch location data.");
+      }
+    } catch (e) {
+      print("Error searching location: $e");
+    }
   }
 
   // 拡大・縮小ボタン
@@ -129,7 +150,6 @@ class _MapScreenState extends State<MapScreen> {
             ),
             myLocationEnabled: true,
             onMapCreated: _onMapCreated,
-            markers: _markers,
           ),
           Positioned(
             right: 10,
@@ -212,21 +232,3 @@ Future<void> recoverLocationSettings(
         : await Geolocator.openAppSettings();
   }
 }
-
-Set<Marker> _markers = {
-  Marker(
-    markerId: MarkerId('marker1'),
-    position: LatLng(35.6809591, 139.7673068),
-    icon: BitmapDescriptor.defaultMarker,
-  ),
-  Marker(
-    markerId: MarkerId('marker2'),
-    position: LatLng(43.068564, 141.3507138),
-    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-  ),
-  Marker(
-    markerId: MarkerId('marker3'),
-    position: LatLng(34.3976198, 132.4753631),
-    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-  ),
-};
