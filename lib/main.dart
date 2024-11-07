@@ -53,7 +53,10 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _getCurrentLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.high, // 高精度な位置情報を取得
+        ),
+      );
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
       });
