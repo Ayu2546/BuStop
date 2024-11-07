@@ -37,12 +37,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
   final puzzlePieces = [
     // ここに各パズルピースの画像を追加
-    Image.asset('assets/.png'),
-    Image.asset('assets/2.png'),
-    Image.asset('assets/3.png'),
-    Image.asset('assets/4.png'),
-    Image.asset('assets/5.png'),
-    Image.asset('assets/6.png'),
+    Image.asset('assets/images/1.png'),
+    Image.asset('assets/images/2.png'),
+    Image.asset('assets/images/3.png'),
+    Image.asset('assets/images/4.png'),
+    Image.asset('assets/images/5.png'),
+    Image.asset('assets/images/6.png'),
   ];
 
   static const double buttonSpace = 20; // ボタン間スペース
