@@ -34,7 +34,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final List<Image> puzzlePieces = [
     // ここに各パズルピースの画像を追加
-    Image.asset(''),
+    Image.asset('assets/1.png'),
     Image.asset('assets/2.png'),
     Image.asset('assets/3.png'),
     Image.asset('assets/4.png'),
@@ -59,7 +59,8 @@ class _MyHomePageState extends State<MyHomePage> {
             // ボタンを押された時の動作
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Puzzle(puzzlePieces: puzzlePieces)),
+              MaterialPageRoute(
+                  builder: (context) => Puzzle(puzzlePieces: puzzlePieces)),
             );
           },
         ),

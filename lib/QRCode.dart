@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
             fixedSize: const Size.fromHeight(300), // ボタンの大きさ
             backgroundColor: const Color(0xFFAADDCC), // ボタンの背景の色
             side:
-            const BorderSide(color: Color(0xFF44AA66), width: 6), // ボタンの枠線
+                const BorderSide(color: Color(0xFF44AA66), width: 6), // ボタンの枠線
           ),
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,

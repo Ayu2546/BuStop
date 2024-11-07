@@ -9,23 +9,27 @@ class Puzzle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('2x3 パズル'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        centerTitle: true, // タイトル中央寄せ
+        title: Text('写真'),
       ),
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // 横2分割
-          mainAxisSpacing: 4.0,
-          crossAxisSpacing: 4.0,
+      body: Center(
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, // 横2分割
+            mainAxisSpacing: 2.0,
+            crossAxisSpacing: 3.0,
+          ),
+          itemCount: puzzlePieces.length,
+          itemBuilder: (context, index) {
+            return Draggable(
+              data: index,
+              feedback: puzzlePieces[index],
+              childWhenDragging: Container(color: Colors.grey[200]),
+              child: puzzlePieces[index],
+            );
+          },
         ),
-        itemCount: puzzlePieces.length,
-        itemBuilder: (context, index) {
-          return Draggable(
-            data: index,
-            feedback: puzzlePieces[index],
-            childWhenDragging: Container(color: Colors.grey[200]),
-            child: puzzlePieces[index],
-          );
-        },
       ),
     );
   }
