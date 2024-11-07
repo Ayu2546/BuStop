@@ -3,6 +3,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -31,7 +33,8 @@ class _MapScreenState extends State<MapScreen> {
   final LatLng defaultLocation =
       const LatLng(35.6895, 139.6917); // Tokyo coordinates
   final Completer<GoogleMapController> _controller = Completer();
-  LatLng? _currentPosition; // 現在位置を保持
+  LatLng? _currentPosition;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -39,7 +42,6 @@ class _MapScreenState extends State<MapScreen> {
     _initLocationService();
   }
 
-  // 位置情報パーミッションと位置取得を行う初期化メソッド
   Future<void> _initLocationService() async {
     final locationResult = await checkLocationSetting();
     if (locationResult == LocationSettingResult.enabled) {
@@ -49,11 +51,14 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // 現在位置を取得
   Future<void> _getCurrentLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+        ),
+      );
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
       });
@@ -63,9 +68,8 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // 現在位置に地図を移動
   void _moveToCurrentLocation() {
-    if (_currentPosition != null) {
+    if (_currentPosition != null && mapController != null) {
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: _currentPosition!, zoom: 17),
@@ -74,26 +78,99 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // マップ作成時の処理
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     _controller.complete(controller);
+  }
+
+  // 検索機能：ジオコードAPIを使用して検索ワードから座標を取得し、マップを移動
+  Future<void> _searchAndNavigate() async {
+    String searchQuery = _searchController.text;
+    if (searchQuery.isEmpty) return;
+
+    final apiKey =
+        'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc'; // 自分のAPIキーに置き換えてください
+    final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/geocode/json?address=$searchQuery&key=$apiKey');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['results'].isNotEmpty) {
+          final location = data['results'][0]['geometry']['location'];
+          LatLng searchedLocation = LatLng(location['lat'], location['lng']);
+          mapController.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(target: searchedLocation, zoom: 15),
+            ),
+          );
+        } else {
+          print("No results found for the search.");
+        }
+      } else {
+        print("Failed to fetch location data.");
+      }
+    } catch (e) {
+      print("Error searching location: $e");
+    }
+  }
+
+  // 拡大・縮小ボタン
+  void _zoomIn() {
+    mapController.animateCamera(CameraUpdate.zoomIn());
+  }
+
+  void _zoomOut() {
+    mapController.animateCamera(CameraUpdate.zoomOut());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Google Map'),
-      ),
-      body: GoogleMap(
-        mapType: MapType.normal,
-        initialCameraPosition: CameraPosition(
-          target: _currentPosition ?? defaultLocation,
-          zoom: 15.0,
+        title: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search location',
+            suffixIcon: IconButton(
+              icon: Icon(Icons.search),
+              onPressed: _searchAndNavigate,
+            ),
+          ),
         ),
-        myLocationEnabled: true,
-        onMapCreated: _onMapCreated,
+      ),
+      body: Stack(
+        children: [
+          GoogleMap(
+            mapType: MapType.normal,
+            initialCameraPosition: CameraPosition(
+              target: _currentPosition ?? defaultLocation,
+              zoom: 15.0,
+            ),
+            myLocationEnabled: true,
+            onMapCreated: _onMapCreated,
+          ),
+          Positioned(
+            right: 10,
+            bottom: 80,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  onPressed: _zoomIn,
+                  child: Icon(Icons.zoom_in),
+                  mini: true,
+                ),
+                SizedBox(height: 10),
+                FloatingActionButton(
+                  onPressed: _zoomOut,
+                  child: Icon(Icons.zoom_out),
+                  mini: true,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
