@@ -5,7 +5,11 @@ import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'CustomBar.dart';
 import 'database.dart';
+import 'package:logger/logger.dart';
+
+var logger = Logger();
 
 void main() {
   runApp(MyApp());
@@ -17,6 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: MapScreen(),
     );
   }
@@ -26,7 +31,7 @@ class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
   @override
-  _MapScreenState createState() => _MapScreenState();
+  State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
@@ -35,6 +40,7 @@ class _MapScreenState extends State<MapScreen> {
   final Completer<GoogleMapController> _controller = Completer();
   LatLng? _currentPosition;
   final TextEditingController _searchController = TextEditingController();
+  final int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -47,7 +53,7 @@ class _MapScreenState extends State<MapScreen> {
     if (locationResult == LocationSettingResult.enabled) {
       await _getCurrentLocation();
     } else {
-      await recoverLocationSettings(context, locationResult);
+      await recoverLocationSettings(locationResult as BuildContext, context as LocationSettingResult);
     }
   }
 
@@ -64,12 +70,12 @@ class _MapScreenState extends State<MapScreen> {
       });
       _moveToCurrentLocation();
     } catch (e) {
-      print("Error getting location: $e");
+      logger.w("Error getting location: $e");
     }
   }
 
   void _moveToCurrentLocation() {
-    if (_currentPosition != null && mapController != null) {
+    if (_currentPosition != null) {
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: _currentPosition!, zoom: 17),
@@ -104,13 +110,13 @@ class _MapScreenState extends State<MapScreen> {
             ),
           );
         } else {
-          print("No results found for the search.");
+          logger.w("No results found for the search.");
         }
       } else {
-        print("Failed to fetch location data.");
+        logger.w("Failed to fetch location data.");
       }
     } catch (e) {
-      print("Error searching location: $e");
+      logger.w("Error searching location: $e");
     }
   }
 
@@ -128,6 +134,9 @@ class _MapScreenState extends State<MapScreen> {
 
     List<String> busTimes =
         schedule.map((item) => item['departureTime'].toString()).toList();
+
+    // mountedチェックを追加して、画面がまだ存在していることを確認
+    if (!mounted) return;
 
     showOkAlertDialog(
       context: context,
@@ -172,6 +181,7 @@ class _MapScreenState extends State<MapScreen> {
               target: _currentPosition ?? defaultLocation,
               zoom: 15.0,
             ),
+            zoomControlsEnabled: false, // Androidのデフォルトズームコントロールを無効にする
             myLocationEnabled: true,
             onMapCreated: _onMapCreated,
             markers: _createMarker(),
@@ -183,19 +193,23 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 FloatingActionButton(
                   onPressed: _zoomIn,
-                  child: Icon(Icons.zoom_in),
                   mini: true,
+                  child: Icon(Icons.zoom_in),
                 ),
                 SizedBox(height: 10),
                 FloatingActionButton(
                   onPressed: _zoomOut,
-                  child: Icon(Icons.zoom_out),
                   mini: true,
+                  child: Icon(Icons.zoom_out),
                 ),
               ],
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBar(
+        selectedIndex: _selectedIndex,
+        onTap: (index){},
       ),
     );
   }
@@ -211,7 +225,7 @@ enum LocationSettingResult {
 Future<LocationSettingResult> checkLocationSetting() async {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
-    print('Location services are disabled.');
+    logger.w('Location services are disabled.');
     return LocationSettingResult.serviceDisabled;
   }
 
@@ -219,13 +233,13 @@ Future<LocationSettingResult> checkLocationSetting() async {
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied) {
-      print('Location permissions are denied.');
+      logger.w('Location permissions are denied.');
       return LocationSettingResult.permissionDenied;
     }
   }
 
   if (permission == LocationPermission.deniedForever) {
-    print('Location permissions are permanently denied.');
+    logger.w('Location permissions are permanently denied.');
     return LocationSettingResult.permissionDeniedForever;
   }
 
@@ -247,7 +261,7 @@ Future<void> recoverLocationSettings(
   );
 
   if (result == OkCancelResult.cancel) {
-    print('User canceled recovery of location settings.');
+    logger.w('User canceled recovery of location settings.');
   } else {
     locationResult == LocationSettingResult.serviceDisabled
         ? await Geolocator.openLocationSettings()

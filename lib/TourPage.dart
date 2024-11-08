@@ -1,41 +1,32 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:hackathon_app/CustomBar.dart';
 import 'package:hackathon_app/Puzzle.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class TourPage extends StatelessWidget {
+  const TourPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Tourist spot'),
+    home: Tour(title: 'Tourist Spot'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class Tour extends StatefulWidget {
+  const Tour({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<Tour> createState() => _Tour();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  void _incrementCounter() {
-    setState(() {});
-  }
-  final puzzlePieces = [
+class _Tour extends State<Tour> {
+
+  static final List<Image> puzzlePieces = <Image>[
     // ここに各パズルピースの画像を追加
     Image.asset('assets/images/1.png'),
     Image.asset('assets/images/2.png'),
@@ -45,19 +36,30 @@ class _MyHomePageState extends State<MyHomePage> {
     Image.asset('assets/images/6.png'),
   ];
 
+  // サウンド再生
+  void _playSound() {
+    final player = AudioPlayer();
+    player.play(AssetSource('sounds/Tapping.wav'));
+  }
+
   static const double buttonSpace = 20; // ボタン間スペース
   static const double buttonFontSize = 25; // ボタンテキストサイズ
   static const Size buttonSize = Size(300, 75); // ボタンサイズ
   static const Color buttonForegroundColor = Colors.black; // テキストカラー
   static const Color buttonBackgroundColor = Colors.lightBlue; // ボタンカラー
+  final int _selectedIndex = 2;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.lightBlue,
         centerTitle: true, // タイトル中央寄せ
         title: Text(widget.title),
+      ),
+      bottomNavigationBar: CustomBar(
+        selectedIndex: _selectedIndex,
+        onTap: (index){},
       ),
       body: Center(
         child: Column(
@@ -66,6 +68,8 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(height: buttonSpace), // スペース
             ElevatedButton(
               onPressed: () {
+                // サウンド再生
+                _playSound();
                 // 1番目のボタンの処理
                 Navigator.push(
                   context,
@@ -87,6 +91,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
             ElevatedButton(
               onPressed: () {
+                // サウンド再生
+                _playSound();
                 // 2番目のボタンの処理書く
               },
               style: ElevatedButton.styleFrom(
@@ -102,7 +108,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
             ElevatedButton(
               onPressed: () {
-                // 2番目のボタンの処理書く
+                // サウンド再生
+                _playSound();
+                // 3番目のボタンの処理書く
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: buttonForegroundColor,
