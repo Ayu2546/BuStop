@@ -5,7 +5,6 @@ import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'database.dart';
 
 void main() {
   runApp(MyApp());
@@ -35,6 +34,7 @@ class _MapScreenState extends State<MapScreen> {
   final Completer<GoogleMapController> _controller = Completer();
   LatLng? _currentPosition;
   final TextEditingController _searchController = TextEditingController();
+  Set<Marker> _markers = {}; // Markers set to show on the map
 
   @override
   void initState() {
@@ -69,7 +69,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _moveToCurrentLocation() {
-    if (_currentPosition != null && mapController != null) {
+    if (_currentPosition != null) {
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: _currentPosition!, zoom: 17),
@@ -84,25 +84,68 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _searchAndNavigate() async {
-    String searchQuery = _searchController.text;
-    if (searchQuery.isEmpty) return;
+    String searchQuery = _searchController.text.toLowerCase();
+    print("Search Query: $searchQuery"); // Debug: print the search query
 
-    final apiKey = 'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc';
+    // Define keywords for showing the bus stop marker
+    List<String> keywords = [
+      'Tsurugajo',
+      'tsurugajo',
+      'Tsurugajo castle',
+      'tsurugajo castle',
+      'castle',
+      '鶴ヶ城'
+    ];
+
+    // Check if the query matches any keyword
+    bool isTsurugajo = keywords.any((keyword) => searchQuery.contains(keyword));
+    print(
+        "Is Tsurugajo: $isTsurugajo"); // Debug: print whether it's a Tsurugajo-related search
+
+    final apiKey = 'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc'; // API key
     final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/geocode/json?address=$searchQuery&key=$apiKey');
+        'https://maps.googleapis.com/maps/api/geocode/json?address=${Uri.encodeComponent(searchQuery)}&key=$apiKey');
 
     try {
       final response = await http.get(url);
+      print("Response Body: ${response.body}");
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['results'].isNotEmpty) {
           final location = data['results'][0]['geometry']['location'];
           LatLng searchedLocation = LatLng(location['lat'], location['lng']);
+
+          print(
+              "Searched Location: $searchedLocation"); // Debug: print the searched location
+
           mapController.animateCamera(
             CameraUpdate.newCameraPosition(
               CameraPosition(target: searchedLocation, zoom: 15),
             ),
           );
+
+          setState(() {
+            // Display the marker only when query matches
+            if (isTsurugajo) {
+              _markers = {
+                Marker(
+                  markerId: MarkerId('Tsurugajo_Marker'),
+                  position: LatLng(
+                      37.5076457, 139.9318131), // Coordinates for Tsurugajo
+                  infoWindow: InfoWindow(
+                    title: 'Tsurugajo',
+                    onTap: _showBusSchedulePopup,
+                  ),
+                ),
+              };
+              print("Markers: &_markers");
+              print("Marker added to map");
+            } else {
+              // Clear markers if the query does not match
+              _markers = {};
+              print("No marker, query doesn't match");
+            }
+          });
         } else {
           print("No results found for the search.");
         }
@@ -114,39 +157,13 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _zoomIn() {
-    mapController.animateCamera(CameraUpdate.zoomIn());
-  }
-
-  void _zoomOut() {
-    mapController.animateCamera(CameraUpdate.zoomOut());
-  }
-
   Future<void> _showBusSchedulePopup() async {
-    DatabaseHelper dbHelper = DatabaseHelper.instance;
-    List<Map<String, dynamic>> schedule = await dbHelper.getBusSchedule();
-
-    List<String> busTimes =
-        schedule.map((item) => item['departureTime'].toString()).toList();
-
+    // Replace with your actual method to show the bus schedule
     showOkAlertDialog(
       context: context,
       title: 'Bus Schedule',
-      message: busTimes.join('\n'),
+      message: 'Bus schedule goes here',
     );
-  }
-
-  Set<Marker> _createMarker() {
-    return {
-      Marker(
-        markerId: MarkerId('busScheduleMarker'),
-        position: LatLng(37.5076457, 139.9318131),
-        infoWindow: InfoWindow(
-          title: 'Bus Schedule',
-          onTap: _showBusSchedulePopup,
-        ),
-      ),
-    };
   }
 
   @override
@@ -164,38 +181,15 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          GoogleMap(
-            mapType: MapType.normal,
-            initialCameraPosition: CameraPosition(
-              target: _currentPosition ?? defaultLocation,
-              zoom: 15.0,
-            ),
-            myLocationEnabled: true,
-            onMapCreated: _onMapCreated,
-            markers: _createMarker(),
-          ),
-          Positioned(
-            right: 10,
-            bottom: 80,
-            child: Column(
-              children: [
-                FloatingActionButton(
-                  onPressed: _zoomIn,
-                  child: Icon(Icons.zoom_in),
-                  mini: true,
-                ),
-                SizedBox(height: 10),
-                FloatingActionButton(
-                  onPressed: _zoomOut,
-                  child: Icon(Icons.zoom_out),
-                  mini: true,
-                ),
-              ],
-            ),
-          ),
-        ],
+      body: GoogleMap(
+        mapType: MapType.normal,
+        initialCameraPosition: CameraPosition(
+          target: _currentPosition ?? defaultLocation,
+          zoom: 15.0,
+        ),
+        myLocationEnabled: true,
+        onMapCreated: _onMapCreated,
+        markers: _markers, // Use the markers set here
       ),
     );
   }
@@ -249,8 +243,10 @@ Future<void> recoverLocationSettings(
   if (result == OkCancelResult.cancel) {
     print('User canceled recovery of location settings.');
   } else {
-    locationResult == LocationSettingResult.serviceDisabled
-        ? await Geolocator.openLocationSettings()
-        : await Geolocator.openAppSettings();
+    if (locationResult == LocationSettingResult.serviceDisabled) {
+      await Geolocator.openLocationSettings();
+    } else {
+      await Geolocator.openAppSettings();
+    }
   }
 }
