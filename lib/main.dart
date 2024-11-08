@@ -69,7 +69,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _moveToCurrentLocation() {
-    if (_currentPosition != null && mapController != null) {
+    if (_currentPosition != null) {
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: _currentPosition!, zoom: 17),

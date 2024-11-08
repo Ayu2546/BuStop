@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hackathon_app/scandata.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ScannerWidget extends StatefulWidget {
@@ -28,13 +29,13 @@ class _ScannerWidgetState extends State<ScannerWidget>
             onDetect: (scandata) {
               setState(() {
                 controller.stop();
-                /*Navigator.of(context).pushReplacement(
+                Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) {
                       return ScanDataWidget(scandata: scandata);
                     },
                   ),
-                );*/
+                );
               });
             },
           );
