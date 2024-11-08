@@ -64,7 +64,7 @@ class _MapScreenState extends State<MapScreen> {
       });
       _moveToCurrentLocation();
     } catch (e) {
-      print("Error getting location: $e");
+      debugPrint("Error getting location: $e");
     }
   }
 
@@ -85,7 +85,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _searchAndNavigate() async {
     String searchQuery = _searchController.text.toLowerCase();
-    print("Search Query: $searchQuery"); // Debug: print the search query
+    debugPrint("Search Query: $searchQuery"); // Debug: print the search query
 
     // Define keywords for showing the bus stop marker
     List<String> keywords = [
@@ -99,7 +99,7 @@ class _MapScreenState extends State<MapScreen> {
 
     // Check if the query matches any keyword
     bool isTsurugajo = keywords.any((keyword) => searchQuery.contains(keyword));
-    print(
+    debugPrint(
         "Is Tsurugajo: $isTsurugajo"); // Debug: print whether it's a Tsurugajo-related search
 
     final apiKey = 'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc'; // API key
@@ -108,14 +108,14 @@ class _MapScreenState extends State<MapScreen> {
 
     try {
       final response = await http.get(url);
-      print("Response Body: ${response.body}");
+      debugPrint("Response Body: ${response.body}");
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['results'].isNotEmpty) {
           final location = data['results'][0]['geometry']['location'];
           LatLng searchedLocation = LatLng(location['lat'], location['lng']);
 
-          print(
+          debugPrint(
               "Searched Location: $searchedLocation"); // Debug: print the searched location
 
           mapController.animateCamera(
@@ -138,22 +138,22 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               };
-              print("Markers: &_markers");
-              print("Marker added to map");
+              debugPrint("Markers: &_markers");
+              debugPrint("Marker added to map");
             } else {
               // Clear markers if the query does not match
               _markers = {};
-              print("No marker, query doesn't match");
+              debugPrint("No marker, query doesn't match");
             }
           });
         } else {
-          print("No results found for the search.");
+          debugPrint("No results found for the search.");
         }
       } else {
-        print("Failed to fetch location data.");
+        debugPrint("Failed to fetch location data.");
       }
     } catch (e) {
-      print("Error searching location: $e");
+      debugPrint("Error searching location: $e");
     }
   }
 
@@ -205,7 +205,7 @@ enum LocationSettingResult {
 Future<LocationSettingResult> checkLocationSetting() async {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
-    print('Location services are disabled.');
+    debugPrint('Location services are disabled.');
     return LocationSettingResult.serviceDisabled;
   }
 
@@ -213,13 +213,13 @@ Future<LocationSettingResult> checkLocationSetting() async {
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied) {
-      print('Location permissions are denied.');
+      debugPrint('Location permissions are denied.');
       return LocationSettingResult.permissionDenied;
     }
   }
 
   if (permission == LocationPermission.deniedForever) {
-    print('Location permissions are permanently denied.');
+    debugPrint('Location permissions are permanently denied.');
     return LocationSettingResult.permissionDeniedForever;
   }
 
@@ -235,13 +235,13 @@ Future<void> recoverLocationSettings(
   final result = await showOkCancelAlertDialog(
     context: context,
     okLabel: 'OK',
-    cancelLabel: 'キャンセル',
+    cancelLabel: 'Cancel',
     title: 'Location Settings',
     message: 'Please enable location services or permissions to continue.',
   );
 
   if (result == OkCancelResult.cancel) {
-    print('User canceled recovery of location settings.');
+    debugPrint('User canceled recovery of location settings.');
   } else {
     if (locationResult == LocationSettingResult.serviceDisabled) {
       await Geolocator.openLocationSettings();
