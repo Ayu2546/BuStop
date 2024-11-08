@@ -1,26 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:hackathon_app/CustomBar.dart';
 import 'package:hackathon_app/scandata.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-class ScannerWidget extends StatefulWidget {
-  const ScannerWidget({super.key});
+class Scanner extends StatelessWidget {
+  const Scanner({super.key});
 
   @override
-  State<ScannerWidget> createState() => _ScannerWidgetState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scan(title: 'QR scan'),
+    );
+  }
 }
 
-class _ScannerWidgetState extends State<ScannerWidget>
+class Scan extends StatefulWidget {
+  const Scan({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<Scan> createState() => _Scan();
+}
+
+class _Scan extends State<Scan>
     with SingleTickerProviderStateMixin {
   MobileScannerController controller = MobileScannerController();
+  final int _selectedIndex = 1;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF66FF99),
-        title: const Text('スキャンしよう'),
+        backgroundColor: Colors.lightBlue,
+        centerTitle: true, // タイトル中央寄せ
+        title: Text(widget.title),
       ),
-      backgroundColor: Colors.black,
+      bottomNavigationBar: CustomBar(
+        selectedIndex: _selectedIndex,
+        onTap: (index){},
+      ),
       body: Builder(
         builder: (context) {
           return MobileScanner(

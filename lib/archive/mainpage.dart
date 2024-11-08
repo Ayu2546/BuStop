@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:hackathon_app/PageTransition.dart';
+import 'package:hackathon_app/TourPage.dart';
 import 'package:hackathon_app/scanner.dart';
 
 void main() {

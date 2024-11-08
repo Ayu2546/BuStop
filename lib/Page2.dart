@@ -1,5 +1,5 @@
 import 'package:hackathon_app/Puzzle.dart';
-import 'package:hackathon_app/StarPuzzle.dart';
+import 'package:hackathon_app/archive/StarPuzzle.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
