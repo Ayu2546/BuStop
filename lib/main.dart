@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
-import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'CustomBar.dart';
 import 'database.dart';
-import 'package:logger/logger.dart';
 
 var logger = Logger();
 
@@ -40,7 +40,9 @@ class _MapScreenState extends State<MapScreen> {
   final Completer<GoogleMapController> _controller = Completer();
   LatLng? _currentPosition;
   final TextEditingController _searchController = TextEditingController();
+  Set<Marker> _markers = {}; // Markers set to show on the map
   final int _selectedIndex = 0;
+  double _currentZoom = 15.0;
 
   @override
   void initState() {
@@ -53,7 +55,8 @@ class _MapScreenState extends State<MapScreen> {
     if (locationResult == LocationSettingResult.enabled) {
       await _getCurrentLocation();
     } else {
-      await recoverLocationSettings(locationResult as BuildContext, context as LocationSettingResult);
+      await recoverLocationSettings(
+          locationResult as BuildContext, context as LocationSettingResult);
     }
   }
 
@@ -89,26 +92,78 @@ class _MapScreenState extends State<MapScreen> {
     _controller.complete(controller);
   }
 
+  void _zoomIn() {
+    setState(() {
+      _currentZoom += 1.0;
+    });
+    mapController.animateCamera(CameraUpdate.zoomTo(_currentZoom));
+  }
+
+  // 縮小機能
+  void _zoomOut() {
+    setState(() {
+      _currentZoom -= 1.0;
+    });
+    mapController.animateCamera(CameraUpdate.zoomTo(_currentZoom));
+  }
+
   Future<void> _searchAndNavigate() async {
-    String searchQuery = _searchController.text;
-    if (searchQuery.isEmpty) return;
+    String searchQuery = _searchController.text.toLowerCase();
+    debugPrint("Search Query: $searchQuery"); // Debug: print the search query
+
+    List<String> keywords = ['tsurugajo', 'castle', '鶴ヶ城', '会津若松城'];
+
+    bool isTsurugajo = keywords.any((keyword) => searchQuery.contains(keyword));
+    debugPrint(
+        "Is Tsurugajo: $isTsurugajo"); // Debug: print whether it's a Tsurugajo-related search
 
     final apiKey = 'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc';
     final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/geocode/json?address=$searchQuery&key=$apiKey');
+        'https://maps.googleapis.com/maps/api/geocode/json?address=${Uri.encodeComponent(searchQuery)}&key=$apiKey');
 
     try {
       final response = await http.get(url);
+      debugPrint("Response Body: ${response.body}");
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['results'].isNotEmpty) {
+
+        // Tsurugajo のキーワード検索でマーカーを直接追加
+        if (isTsurugajo) {
+          setState(() {
+            _markers = {
+              Marker(
+                markerId: MarkerId('Tsurugajo_Marker'),
+                position: LatLng(37.5076457, 139.9318131),
+                infoWindow: InfoWindow(
+                  title: 'Tsurugajo',
+                  onTap: _showBusSchedulePopup,
+                ),
+              ),
+            };
+            debugPrint("Marker added for Tsurugajo location");
+          });
+
+          // Tsurugajo の位置に移動
+          mapController.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(target: LatLng(37.5076457, 139.9318131), zoom: 15),
+            ),
+          );
+        } else if (data['results'].isNotEmpty) {
           final location = data['results'][0]['geometry']['location'];
           LatLng searchedLocation = LatLng(location['lat'], location['lng']);
+
+          debugPrint("Searched Location: $searchedLocation");
+
           mapController.animateCamera(
             CameraUpdate.newCameraPosition(
               CameraPosition(target: searchedLocation, zoom: 15),
             ),
           );
+
+          setState(() {
+            _markers = {};
+          });
         } else {
           logger.w("No results found for the search.");
         }
@@ -120,15 +175,8 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _zoomIn() {
-    mapController.animateCamera(CameraUpdate.zoomIn());
-  }
-
-  void _zoomOut() {
-    mapController.animateCamera(CameraUpdate.zoomOut());
-  }
-
   Future<void> _showBusSchedulePopup() async {
+    // Replace with your actual method to show the bus schedule
     DatabaseHelper dbHelper = DatabaseHelper.instance;
     List<Map<String, dynamic>> schedule = await dbHelper.getBusSchedule();
 
@@ -141,21 +189,8 @@ class _MapScreenState extends State<MapScreen> {
     showOkAlertDialog(
       context: context,
       title: 'Bus Schedule',
-      message: busTimes.join('\n'),
+      message: 'Bus schedule goes here',
     );
-  }
-
-  Set<Marker> _createMarker() {
-    return {
-      Marker(
-        markerId: MarkerId('busScheduleMarker'),
-        position: LatLng(37.5076457, 139.9318131),
-        infoWindow: InfoWindow(
-          title: 'Bus Schedule',
-          onTap: _showBusSchedulePopup,
-        ),
-      ),
-    };
   }
 
   @override
@@ -179,27 +214,25 @@ class _MapScreenState extends State<MapScreen> {
             mapType: MapType.normal,
             initialCameraPosition: CameraPosition(
               target: _currentPosition ?? defaultLocation,
-              zoom: 15.0,
+              zoom: _currentZoom,
             ),
-            zoomControlsEnabled: false, // Androidのデフォルトズームコントロールを無効にする
+            zoomControlsEnabled: false,
             myLocationEnabled: true,
             onMapCreated: _onMapCreated,
-            markers: _createMarker(),
+            markers: _markers,
           ),
           Positioned(
-            right: 10,
             bottom: 80,
+            right: 10,
             child: Column(
               children: [
                 FloatingActionButton(
                   onPressed: _zoomIn,
-                  mini: true,
                   child: Icon(Icons.zoom_in),
                 ),
                 SizedBox(height: 10),
                 FloatingActionButton(
                   onPressed: _zoomOut,
-                  mini: true,
                   child: Icon(Icons.zoom_out),
                 ),
               ],
@@ -209,7 +242,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       bottomNavigationBar: CustomBar(
         selectedIndex: _selectedIndex,
-        onTap: (index){},
+        onTap: (index) {},
       ),
     );
   }
@@ -255,7 +288,7 @@ Future<void> recoverLocationSettings(
   final result = await showOkCancelAlertDialog(
     context: context,
     okLabel: 'OK',
-    cancelLabel: 'キャンセル',
+    cancelLabel: 'Cancel',
     title: 'Location Settings',
     message: 'Please enable location services or permissions to continue.',
   );
@@ -263,8 +296,10 @@ Future<void> recoverLocationSettings(
   if (result == OkCancelResult.cancel) {
     logger.w('User canceled recovery of location settings.');
   } else {
-    locationResult == LocationSettingResult.serviceDisabled
-        ? await Geolocator.openLocationSettings()
-        : await Geolocator.openAppSettings();
+    if (locationResult == LocationSettingResult.serviceDisabled) {
+      await Geolocator.openLocationSettings();
+    } else {
+      await Geolocator.openAppSettings();
+    }
   }
 }

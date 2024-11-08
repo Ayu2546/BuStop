@@ -10,7 +10,7 @@ class TourPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-    home: Tour(title: 'Tourist Spot'),
+      home: Tour(title: 'Tourist Spot'),
     );
   }
 }
@@ -25,7 +25,6 @@ class Tour extends StatefulWidget {
 }
 
 class _Tour extends State<Tour> {
-
   static final List<Image> puzzlePieces = <Image>[
     // ここに各パズルピースの画像を追加
     Image.asset('assets/images/1.png'),
@@ -42,7 +41,7 @@ class _Tour extends State<Tour> {
     player.play(AssetSource('sounds/Tapping.wav'));
   }
 
-  static const double buttonSpace = 20; // ボタン間スペース
+  static const double buttonSpace = 30; // ボタン間スペース
   static const double buttonFontSize = 25; // ボタンテキストサイズ
   static const Size buttonSize = Size(300, 75); // ボタンサイズ
   static const Color buttonForegroundColor = Colors.black; // テキストカラー
@@ -59,7 +58,7 @@ class _Tour extends State<Tour> {
       ),
       bottomNavigationBar: CustomBar(
         selectedIndex: _selectedIndex,
-        onTap: (index){},
+        onTap: (index) {},
       ),
       body: Center(
         child: Column(
@@ -74,8 +73,7 @@ class _Tour extends State<Tour> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => Puzzle(puzzlePieces: puzzlePieces)
-                  ),
+                      builder: (context) => Puzzle(puzzlePieces: puzzlePieces)),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -83,8 +81,9 @@ class _Tour extends State<Tour> {
                 backgroundColor: buttonBackgroundColor, // ボタンカラー
                 fixedSize: buttonSize, // ボタンサイズ
               ),
-              child: Text('鶴ヶ城', style: TextStyle(fontSize: buttonFontSize) // テキストサイズ
-              ),
+              child: Text('鶴ヶ城',
+                  style: TextStyle(fontSize: buttonFontSize) // テキストサイズ
+                  ),
             ),
 
             SizedBox(height: buttonSpace),
@@ -100,8 +99,7 @@ class _Tour extends State<Tour> {
                 backgroundColor: buttonBackgroundColor,
                 fixedSize: buttonSize,
               ),
-              child: Text('飯盛山', style: TextStyle(fontSize: buttonFontSize)
-              ),
+              child: Text('飯盛山', style: TextStyle(fontSize: buttonFontSize)),
             ),
 
             SizedBox(height: buttonSpace),
@@ -117,8 +115,7 @@ class _Tour extends State<Tour> {
                 backgroundColor: buttonBackgroundColor,
                 fixedSize: buttonSize,
               ),
-              child: Text('七日町通り', style: TextStyle(fontSize: buttonFontSize)
-              ),
+              child: Text('七日町通り', style: TextStyle(fontSize: buttonFontSize)),
             ),
           ],
         ),
