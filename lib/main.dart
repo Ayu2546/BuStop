@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
-import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'dart:async';
 import 'dart:convert';
 
 void main() {
@@ -87,22 +87,13 @@ class _MapScreenState extends State<MapScreen> {
     String searchQuery = _searchController.text.toLowerCase();
     debugPrint("Search Query: $searchQuery"); // Debug: print the search query
 
-    // Define keywords for showing the bus stop marker
-    List<String> keywords = [
-      'Tsurugajo',
-      'tsurugajo',
-      'Tsurugajo castle',
-      'tsurugajo castle',
-      'castle',
-      '鶴ヶ城'
-    ];
+    List<String> keywords = ['tsurugajo', 'castle', '鶴ヶ城', '会津若松城'];
 
-    // Check if the query matches any keyword
     bool isTsurugajo = keywords.any((keyword) => searchQuery.contains(keyword));
     debugPrint(
         "Is Tsurugajo: $isTsurugajo"); // Debug: print whether it's a Tsurugajo-related search
 
-    final apiKey = 'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc'; // API key
+    final apiKey = 'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc';
     final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/geocode/json?address=${Uri.encodeComponent(searchQuery)}&key=$apiKey');
 
@@ -111,12 +102,34 @@ class _MapScreenState extends State<MapScreen> {
       debugPrint("Response Body: ${response.body}");
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['results'].isNotEmpty) {
+
+        // Tsurugajo のキーワード検索でマーカーを直接追加
+        if (isTsurugajo) {
+          setState(() {
+            _markers = {
+              Marker(
+                markerId: MarkerId('Tsurugajo_Marker'),
+                position: LatLng(37.5076457, 139.9318131),
+                infoWindow: InfoWindow(
+                  title: 'Tsurugajo',
+                  onTap: _showBusSchedulePopup,
+                ),
+              ),
+            };
+            debugPrint("Marker added for Tsurugajo location");
+          });
+
+          // Tsurugajo の位置に移動
+          mapController.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(target: LatLng(37.5076457, 139.9318131), zoom: 15),
+            ),
+          );
+        } else if (data['results'].isNotEmpty) {
           final location = data['results'][0]['geometry']['location'];
           LatLng searchedLocation = LatLng(location['lat'], location['lng']);
 
-          debugPrint(
-              "Searched Location: $searchedLocation"); // Debug: print the searched location
+          debugPrint("Searched Location: $searchedLocation");
 
           mapController.animateCamera(
             CameraUpdate.newCameraPosition(
@@ -125,26 +138,7 @@ class _MapScreenState extends State<MapScreen> {
           );
 
           setState(() {
-            // Display the marker only when query matches
-            if (isTsurugajo) {
-              _markers = {
-                Marker(
-                  markerId: MarkerId('Tsurugajo_Marker'),
-                  position: LatLng(
-                      37.5076457, 139.9318131), // Coordinates for Tsurugajo
-                  infoWindow: InfoWindow(
-                    title: 'Tsurugajo',
-                    onTap: _showBusSchedulePopup,
-                  ),
-                ),
-              };
-              debugPrint("Markers: &_markers");
-              debugPrint("Marker added to map");
-            } else {
-              // Clear markers if the query does not match
-              _markers = {};
-              debugPrint("No marker, query doesn't match");
-            }
+            _markers = {};
           });
         } else {
           debugPrint("No results found for the search.");
