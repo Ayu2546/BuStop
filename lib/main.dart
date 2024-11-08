@@ -5,6 +5,11 @@ import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
+import 'CustomBar.dart';
+import 'database.dart';
+import 'package:logger/logger.dart';
+
+var logger = Logger();
 
 void main() {
   runApp(MyApp());
@@ -16,6 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: MapScreen(),
     );
   }
@@ -25,7 +31,7 @@ class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
   @override
-  _MapScreenState createState() => _MapScreenState();
+  State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
@@ -35,6 +41,8 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _currentPosition;
   final TextEditingController _searchController = TextEditingController();
   Set<Marker> _markers = {}; // Markers set to show on the map
+  final int _selectedIndex = 0;
+  double _currentZoom = 15.0;
 
   @override
   void initState() {
@@ -47,7 +55,8 @@ class _MapScreenState extends State<MapScreen> {
     if (locationResult == LocationSettingResult.enabled) {
       await _getCurrentLocation();
     } else {
-      await recoverLocationSettings(context, locationResult);
+      await recoverLocationSettings(
+          locationResult as BuildContext, context as LocationSettingResult);
     }
   }
 
@@ -64,7 +73,7 @@ class _MapScreenState extends State<MapScreen> {
       });
       _moveToCurrentLocation();
     } catch (e) {
-      debugPrint("Error getting location: $e");
+      logger.w("Error getting location: $e");
     }
   }
 
@@ -81,6 +90,21 @@ class _MapScreenState extends State<MapScreen> {
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     _controller.complete(controller);
+  }
+
+  void _zoomIn() {
+    setState(() {
+      _currentZoom += 1.0;
+    });
+    mapController.animateCamera(CameraUpdate.zoomTo(_currentZoom));
+  }
+
+  // 縮小機能
+  void _zoomOut() {
+    setState(() {
+      _currentZoom -= 1.0;
+    });
+    mapController.animateCamera(CameraUpdate.zoomTo(_currentZoom));
   }
 
   Future<void> _searchAndNavigate() async {
@@ -141,18 +165,27 @@ class _MapScreenState extends State<MapScreen> {
             _markers = {};
           });
         } else {
-          debugPrint("No results found for the search.");
+          logger.w("No results found for the search.");
         }
       } else {
-        debugPrint("Failed to fetch location data.");
+        logger.w("Failed to fetch location data.");
       }
     } catch (e) {
-      debugPrint("Error searching location: $e");
+      logger.w("Error searching location: $e");
     }
   }
 
   Future<void> _showBusSchedulePopup() async {
     // Replace with your actual method to show the bus schedule
+    DatabaseHelper dbHelper = DatabaseHelper.instance;
+    List<Map<String, dynamic>> schedule = await dbHelper.getBusSchedule();
+
+    List<String> busTimes =
+        schedule.map((item) => item['departureTime'].toString()).toList();
+
+    // mountedチェックを追加して、画面がまだ存在していることを確認
+    if (!mounted) return;
+
     showOkAlertDialog(
       context: context,
       title: 'Bus Schedule',
@@ -175,15 +208,41 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
       ),
-      body: GoogleMap(
-        mapType: MapType.normal,
-        initialCameraPosition: CameraPosition(
-          target: _currentPosition ?? defaultLocation,
-          zoom: 15.0,
-        ),
-        myLocationEnabled: true,
-        onMapCreated: _onMapCreated,
-        markers: _markers, // Use the markers set here
+      body: Stack(
+        children: [
+          GoogleMap(
+            mapType: MapType.normal,
+            initialCameraPosition: CameraPosition(
+              target: _currentPosition ?? defaultLocation,
+              zoom: _currentZoom,
+            ),
+            zoomControlsEnabled: false,
+            myLocationEnabled: true,
+            onMapCreated: _onMapCreated,
+            markers: _markers,
+          ),
+          Positioned(
+            bottom: 80,
+            right: 10,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  onPressed: _zoomIn,
+                  child: Icon(Icons.zoom_in),
+                ),
+                SizedBox(height: 10),
+                FloatingActionButton(
+                  onPressed: _zoomOut,
+                  child: Icon(Icons.zoom_out),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: CustomBar(
+        selectedIndex: _selectedIndex,
+        onTap: (index) {},
       ),
     );
   }
@@ -199,7 +258,7 @@ enum LocationSettingResult {
 Future<LocationSettingResult> checkLocationSetting() async {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
-    debugPrint('Location services are disabled.');
+    logger.w('Location services are disabled.');
     return LocationSettingResult.serviceDisabled;
   }
 
@@ -207,13 +266,13 @@ Future<LocationSettingResult> checkLocationSetting() async {
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied) {
-      debugPrint('Location permissions are denied.');
+      logger.w('Location permissions are denied.');
       return LocationSettingResult.permissionDenied;
     }
   }
 
   if (permission == LocationPermission.deniedForever) {
-    debugPrint('Location permissions are permanently denied.');
+    logger.w('Location permissions are permanently denied.');
     return LocationSettingResult.permissionDeniedForever;
   }
 
@@ -235,7 +294,7 @@ Future<void> recoverLocationSettings(
   );
 
   if (result == OkCancelResult.cancel) {
-    debugPrint('User canceled recovery of location settings.');
+    logger.w('User canceled recovery of location settings.');
   } else {
     if (locationResult == LocationSettingResult.serviceDisabled) {
       await Geolocator.openLocationSettings();
