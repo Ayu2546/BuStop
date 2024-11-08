@@ -5,6 +5,7 @@ import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'database.dart';
 
 void main() {
   runApp(MyApp());
@@ -30,8 +31,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController mapController;
-  final LatLng defaultLocation =
-      const LatLng(35.6895, 139.6917); // Tokyo coordinates
+  final LatLng defaultLocation = const LatLng(37.4878198, 139.9296658);
   final Completer<GoogleMapController> _controller = Completer();
   LatLng? _currentPosition;
   final TextEditingController _searchController = TextEditingController();
@@ -83,13 +83,11 @@ class _MapScreenState extends State<MapScreen> {
     _controller.complete(controller);
   }
 
-  // 検索機能：ジオコードAPIを使用して検索ワードから座標を取得し、マップを移動
   Future<void> _searchAndNavigate() async {
     String searchQuery = _searchController.text;
     if (searchQuery.isEmpty) return;
 
-    final apiKey =
-        'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc'; // 自分のAPIキーに置き換えてください
+    final apiKey = 'AIzaSyB3WzJiraDNM_hDGe9M_f1-bjzgSry53nc';
     final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/geocode/json?address=$searchQuery&key=$apiKey');
 
@@ -116,13 +114,39 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // 拡大・縮小ボタン
   void _zoomIn() {
     mapController.animateCamera(CameraUpdate.zoomIn());
   }
 
   void _zoomOut() {
     mapController.animateCamera(CameraUpdate.zoomOut());
+  }
+
+  Future<void> _showBusSchedulePopup() async {
+    DatabaseHelper dbHelper = DatabaseHelper.instance;
+    List<Map<String, dynamic>> schedule = await dbHelper.getBusSchedule();
+
+    List<String> busTimes =
+        schedule.map((item) => item['departureTime'].toString()).toList();
+
+    showOkAlertDialog(
+      context: context,
+      title: 'Bus Schedule',
+      message: busTimes.join('\n'),
+    );
+  }
+
+  Set<Marker> _createMarker() {
+    return {
+      Marker(
+        markerId: MarkerId('busScheduleMarker'),
+        position: LatLng(37.5076457, 139.9318131),
+        infoWindow: InfoWindow(
+          title: 'Bus Schedule',
+          onTap: _showBusSchedulePopup,
+        ),
+      ),
+    };
   }
 
   @override
@@ -150,6 +174,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
             myLocationEnabled: true,
             onMapCreated: _onMapCreated,
+            markers: _createMarker(),
           ),
           Positioned(
             right: 10,
@@ -176,7 +201,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 }
 
-// LocationSettingResult の定義
 enum LocationSettingResult {
   serviceDisabled,
   permissionDenied,
@@ -184,7 +208,6 @@ enum LocationSettingResult {
   enabled,
 }
 
-// 位置情報パーミッションと設定の確認
 Future<LocationSettingResult> checkLocationSetting() async {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
@@ -209,7 +232,6 @@ Future<LocationSettingResult> checkLocationSetting() async {
   return LocationSettingResult.enabled;
 }
 
-// 位置設定のリカバリ処理
 Future<void> recoverLocationSettings(
     BuildContext context, LocationSettingResult locationResult) async {
   if (locationResult == LocationSettingResult.enabled) {
