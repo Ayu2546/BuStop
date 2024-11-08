@@ -3,11 +3,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'CustomBar.dart';
 import 'database.dart';
-import 'package:logger/logger.dart';
 
 var logger = Logger();
 
