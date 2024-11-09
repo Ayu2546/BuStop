@@ -21,9 +21,9 @@ class CustomBar extends StatefulWidget {
 class _CustomBarState extends State<CustomBar> {
   // 各ページ
   static final List<Widget> _pages = <Widget>[
-    MyApp(),
-    Scanner(),
-    TourPage(),
+    const MyApp(),
+    const Scanner(),
+    const TourPage(),
   ];
 
   // サウンド再生
