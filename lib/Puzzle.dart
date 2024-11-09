@@ -11,7 +11,7 @@ class Puzzle extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         centerTitle: true, // タイトル中央寄せ
-        title: Text('写真'),
+        title: Text('Puzzle'),
       ),
       body: Center(
         child: GridView.builder(
