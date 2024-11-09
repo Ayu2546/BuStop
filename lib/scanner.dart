@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:hackathon_app/CustomBar.dart';
-import 'package:hackathon_app/scandata.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:flutter/material.dart';
+import 'package:BuStop/CustomBar.dart';
+import 'package:BuStop/scandata.dart';
 
 class Scanner extends StatelessWidget {
   const Scanner({super.key});
@@ -24,8 +24,7 @@ class Scan extends StatefulWidget {
   State<Scan> createState() => _Scan();
 }
 
-class _Scan extends State<Scan>
-    with SingleTickerProviderStateMixin {
+class _Scan extends State<Scan> with SingleTickerProviderStateMixin {
   MobileScannerController controller = MobileScannerController();
   final int _selectedIndex = 1;
 
@@ -39,7 +38,7 @@ class _Scan extends State<Scan>
       ),
       bottomNavigationBar: CustomBar(
         selectedIndex: _selectedIndex,
-        onTap: (index){},
+        onTap: (index) {},
       ),
       body: Builder(
         builder: (context) {
