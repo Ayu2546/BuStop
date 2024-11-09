@@ -1,8 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:hackathon_app/TourPage.dart';
-import 'package:hackathon_app/scanner.dart';
+import 'package:BuStop/TourPage.dart';
+import 'package:BuStop/scanner.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _selectedIndex = index;
     });
-    if(_selectedIndex != 0) {
+    if (_selectedIndex != 0) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => _pages[index]),
@@ -69,7 +68,8 @@ class _MyHomePageState extends State<MyHomePage> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(label: 'Map', icon: Icon(Icons.place)),
-          BottomNavigationBarItem(label: 'QRCode', icon: Icon(Icons.qr_code_scanner)),
+          BottomNavigationBarItem(
+              label: 'QRCode', icon: Icon(Icons.qr_code_scanner)),
           BottomNavigationBarItem(label: 'Tour', icon: Icon(Icons.tour)),
         ],
         currentIndex: _selectedIndex,

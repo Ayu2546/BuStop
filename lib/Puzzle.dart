@@ -16,7 +16,7 @@ class Puzzle extends StatelessWidget {
       body: Center(
         child: GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // 横2分割
+            crossAxisCount: 1,
             mainAxisSpacing: 2.0,
             crossAxisSpacing: 3.0,
           ),
