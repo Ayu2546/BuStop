@@ -111,7 +111,15 @@ class _MapScreenState extends State<MapScreen> {
     String searchQuery = _searchController.text.toLowerCase();
     debugPrint("Search Query: $searchQuery"); // Debug: print the search query
 
-    List<String> keywords = ['tsurugajo', 'castle', '鶴ヶ城', '会津若松城'];
+    List<String> keywords = [
+      'Tsurugajo',
+      'Tsurugajo castle',
+      'tsurugajo',
+      'tsurugajo castle',
+      'castle',
+      '鶴ヶ城',
+      '会津若松城'
+    ];
 
     bool isTsurugajo = keywords.any((keyword) => searchQuery.contains(keyword));
     debugPrint(
@@ -135,7 +143,7 @@ class _MapScreenState extends State<MapScreen> {
                 markerId: MarkerId('Tsurugajo_Marker'),
                 position: LatLng(37.5076457, 139.9318131),
                 infoWindow: InfoWindow(
-                  title: 'Tsurugajo',
+                  title: 'Schedule',
                   onTap: _showBusSchedulePopup,
                 ),
               ),
@@ -176,12 +184,12 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _showBusSchedulePopup() async {
-    // Replace with your actual method to show the bus schedule
     DatabaseHelper dbHelper = DatabaseHelper.instance;
     List<Map<String, dynamic>> schedule = await dbHelper.getBusSchedule();
 
-    List<String> busTimes =
-        schedule.map((item) => item['departureTime'].toString()).toList();
+    // スケジュールのリストを文字列に変換
+    String busTimes =
+        schedule.map((item) => item['departureTime'].toString()).join('\n');
 
     // mountedチェックを追加して、画面がまだ存在していることを確認
     if (!mounted) return;
@@ -189,7 +197,7 @@ class _MapScreenState extends State<MapScreen> {
     showOkAlertDialog(
       context: context,
       title: 'Bus Schedule',
-      message: 'Bus schedule goes here',
+      message: busTimes, // ここにバススケジュールを表示
     );
   }
 
