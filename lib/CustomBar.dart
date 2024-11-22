@@ -1,8 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:BuStop/TourPage.dart';
-import 'package:BuStop/main.dart';
-import 'package:BuStop/scanner.dart';
+import 'package:bustop/TourPage.dart';
+import 'package:bustop/main.dart';
+import 'package:bustop/scanner.dart';
 
 class CustomBar extends StatefulWidget {
   final int selectedIndex;
