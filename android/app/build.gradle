@@ -16,7 +16,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.hackathon_app"
+    namespace = "com.example.BuStop"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -30,7 +30,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.hackathon_app"
+        applicationId = "com.example.BuStop"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

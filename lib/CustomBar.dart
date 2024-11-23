@@ -1,8 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:hackathon_app/TourPage.dart';
-import 'package:hackathon_app/main.dart';
-import 'package:hackathon_app/scanner.dart';
+import 'package:bustop/TourPage.dart';
+import 'package:bustop/main.dart';
+import 'package:bustop/scanner.dart';
 
 class CustomBar extends StatefulWidget {
   final int selectedIndex;
@@ -57,9 +57,18 @@ class _CustomBarState extends State<CustomBar> {
       onTap: _onItemTapped,
       selectedItemColor: Colors.amber[800],
       items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(label: 'Map', icon: Icon(Icons.place),),
-        BottomNavigationBarItem(label: 'QRCode', icon: Icon(Icons.qr_code_scanner),),
-        BottomNavigationBarItem(label: 'Tour', icon: Icon(Icons.tour),),
+        BottomNavigationBarItem(
+          label: 'Map',
+          icon: Icon(Icons.place),
+        ),
+        BottomNavigationBarItem(
+          label: 'QRCode',
+          icon: Icon(Icons.qr_code_scanner),
+        ),
+        BottomNavigationBarItem(
+          label: 'Tour',
+          icon: Icon(Icons.tour),
+        ),
       ],
     );
   }

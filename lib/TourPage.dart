@@ -1,7 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:hackathon_app/CustomBar.dart';
-import 'package:hackathon_app/Puzzle.dart';
+import 'package:bustop/CustomBar.dart';
+import 'package:bustop/Puzzle.dart';
 
 class TourPage extends StatelessWidget {
   const TourPage({super.key});
@@ -28,11 +28,6 @@ class _Tour extends State<Tour> {
   static final List<Image> puzzlePieces = <Image>[
     // ここに各パズルピースの画像を追加
     Image.asset('assets/images/1.png'),
-    Image.asset('assets/images/2.png'),
-    Image.asset('assets/images/3.png'),
-    Image.asset('assets/images/4.png'),
-    Image.asset('assets/images/5.png'),
-    Image.asset('assets/images/6.png'),
   ];
 
   // サウンド再生
